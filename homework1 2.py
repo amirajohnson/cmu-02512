@@ -126,59 +126,6 @@ def brute_force_approach(G, n, m):
 # print(brute_force_approach(G, n, m))
 
 
-'''
-Problem e: Test your methods by creating a wrapper program that takes as input m, n, and a number of
-iterations k. For each iteration, it should generate a random problem instance by filling in each
-element of gij to be 0 or 1 with 50 percent probability. It should record the average solution size and
-the average time to derive a solution for each method over all iterations. Run your program for
-k = 100 and m = n = 1, m = n = 2, m = n = 3, etc., until one of the methods becomes too slow
-to be practical. Return a plots of the average solution size and the average time required for each
-methods as a function of n.
-'''
-import random
-import timeit as time
-
-def wrapper(m, n, k):
-    brute_force_sum = 0
-    brute_force_count = 0
-
-    heuristic_sum = 0
-    heuristic_count = 0
-
-    genomes = [[0 for i in range(n)] for i in range(m)]
-    for i in range(k):
-        for genome in genomes:
-            for j in range(n):
-                random_number = random.randint(0, 10)
-                if random_number < 5:
-                    genome[j] = 0
-                else:
-                    genome[j] = 1
-        #method 1: heuristic
-        sol1 = heuristic_approach(genomes, n, m)
-        heuristic_sum += len(sol1)
-        heuristic_count += time.timeit(str(sol1))
-        #method 2:
-        sol2 = brute_force_approach(genomes, n, m)
-        brute_force_sum += len(sol2)
-        brute_force_count += time.timeit(str(sol2))
-    h_avg = heuristic_sum / k
-    bf_avg = brute_force_sum / k
-    time_avg_hv = heuristic_count / k
-    time_avg_bf = brute_force_count / k
-
-    return h_avg, bf_avg, time_avg_hv, time_avg_bf
-
-for i in range(0, 20, 1):
-    h_avg, bf_avg, time_avg_hv, time_avg_bf = wrapper(i, i, 100)
-    # total = time.timeit(str(wrapper(i, i, 100)), number = 1)
-    print(i, i, 100)
-    print("h average: ", h_avg)
-    print("bf_average: ", bf_avg)
-    print("time avg hv = ", time_avg_hv)
-    print("time avg bf = ", time_avg_bf)
-    print("\n")
-
 
 
 
