@@ -1,4 +1,12 @@
 '''
+Name: Amira Johnson
+andrewID: amiraj
+Homework 1 
+September 21st, 2023
+'''
+
+
+'''
 Problem 4a - Heuristic Approach
     - Goal: A greedy algorithm that repeatedly picks the genome that contains   
         the most reads that need to be accounted for. Do this until we have a 
