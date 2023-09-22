@@ -25,8 +25,9 @@ Problem 4a - Heuristic Approach
 
 def get_best_genome(G, n, m, reads_found, reads_left):
     best_genome = []
+    best_index = -1
     max_found = 0
-    for genome in G:
+    for index, genome in enumerate(G):
         current_found = 0
         for i in range(len(genome)):
             if genome[i] == 1 and reads_found[i] == 0: #if the genome hasnt been found
@@ -35,16 +36,15 @@ def get_best_genome(G, n, m, reads_found, reads_left):
         if current_found > max_found: #update if we found more than what the last genome did.
             max_found = current_found
             best_genome = genome
+            best_index = index
     #need to remove the best genome from G 
     
     #now loop through best genome and update reads_found and reads_left
-    if best_genome != []:
-        for i in range(len(best_genome)):
-            if best_genome[i] == 1 and reads_found[i] == 0:
-                reads_left -=1
-                reads_found[i] = 1
-        G.remove(best_genome)
-    return G, reads_found, best_genome, reads_left
+    for i in range(len(best_genome)):
+        if best_genome[i] == 1 and reads_found[i] == 0:
+            reads_left -=1
+            reads_found[i] = 1
+    return best_index, reads_found, best_genome, reads_left
 
 
 def heuristic_approach(G, n, m):
@@ -52,13 +52,13 @@ def heuristic_approach(G, n, m):
     reads_found = [0 for i in range(n)]
     reads_left = n
 
-    while reads_left > 0:
-        if G != []:
-            G, reads_found, best_genome, reads_left = get_best_genome(G, n, m, reads_found, reads_left)
-            if best_genome not in g_prime and best_genome != []:
-                g_prime.append(best_genome)
-            if best_genome == []: return g_prime
-        else: return []
+    while reads_left > 0 and G:
+        # if G != []:
+        best_index, reads_found, best_genome, reads_left = get_best_genome(G, n, m, reads_found, reads_left)
+        G.pop(best_index)
+        if best_genome not in g_prime:
+            g_prime.append(best_genome)
+        # else: return []
     return g_prime       
 
 
@@ -83,20 +83,17 @@ Problem 4b
 '''
 
 #Powerset function adopted from:
-#https://towardsdatascience.com/the-subsets-powerset-of-a-set-in-python-3-18e06bd85678
-
-def classical_iterative(elems):
-    powerset_size = 2**len(elems)
-    counter = 0
-    j = 0
- 
-    for counter in range(0, powerset_size):
-        results = []
-        for j in range(0, len(elems)):
-            # take the element if on bit position j it says to take it (i.e. 1 appears)
-            if((counter & (1 << j)) > 0):
-                results.append(elems[j])
-        yield results
+#https://www.kosbie.net/cmu/spring-16/15-112/notes/notes-recursion-examples.html
+def powerset(a):
+    # returns a list of all subsets of the list a
+    if (len(a) == 0):
+        return [[]]
+    else:
+        allSubsets = []
+        for subset in powerset(a[1:]):
+            allSubsets += [subset]
+            allSubsets += [[a[0]] + subset]
+        return allSubsets
  
 #checks if the input subset covers all genes n
 def is_valid_subset(subset, n):
@@ -111,11 +108,14 @@ def is_valid_subset(subset, n):
 
 
 def brute_force_approach(G, n, m):
-    powerset = classical_iterative(G)
-    for subset in powerset:
+    p = powerset(G)
+    results = []
+    for subset in p:
         has_all = is_valid_subset(subset, n)
-        if has_all: return subset
-    return []
+        if has_all: 
+            results.append(subset)
+    return results
+
 
 # print("brute force")
 # G = [[1, 1, 0, 1, 0, 1], 
@@ -145,15 +145,19 @@ def wrapper(m, n, k):
     heuristic_sum = 0
     heuristic_count = 0
 
-    genomes = [[0 for i in range(n)] for i in range(m)]
+    genomes = [[0 for i in range(n)] for j in range(m)]
     for i in range(k):
+        #create a new genome
         for genome in genomes:
             for j in range(n):
+                #fill it as zero or one with equal probability
                 random_number = random.randint(0, 10)
                 if random_number < 5:
                     genome[j] = 0
                 else:
                     genome[j] = 1
+            # print("Randomized Genome: ", genome)
+        #after creating the genome, call the functions.
         #method 1: heuristic
         sol1 = heuristic_approach(genomes, n, m)
         heuristic_sum += len(sol1)
@@ -162,6 +166,7 @@ def wrapper(m, n, k):
         sol2 = brute_force_approach(genomes, n, m)
         brute_force_sum += len(sol2)
         brute_force_count += time.timeit(str(sol2))
+
     h_avg = heuristic_sum / k
     bf_avg = brute_force_sum / k
     time_avg_hv = heuristic_count / k
@@ -169,17 +174,28 @@ def wrapper(m, n, k):
 
     return h_avg, bf_avg, time_avg_hv, time_avg_bf
 
-for i in range(0, 20, 1):
-    h_avg, bf_avg, time_avg_hv, time_avg_bf = wrapper(i, i, 100)
-    # total = time.timeit(str(wrapper(i, i, 100)), number = 1)
-    print(i, i, 100)
-    print("h average: ", h_avg)
-    print("bf_average: ", bf_avg)
-    print("time avg hv = ", time_avg_hv)
-    print("time avg bf = ", time_avg_bf)
-    print("\n")
+#from geeksforgeeks
+import csv
+with open("output.csv", 'w') as csvfile:
+    csvwriter = csv.writer(csvfile)
+    fields = ["Brute Force", "Heuristic Approach"]
+    csvwriter.writerow(fields)
+    for i in range(1, 13, 1):
+        h_avg, bf_avg, time_avg_hv, time_avg_bf = wrapper(i, i, 100)
+        # total = time.timeit(str(wrapper(i, i, 100)), number = 1)
+        row = [[h_avg, bf_avg]]
+        csvwriter.writerows(row)
+        print("done")
 
 
+
+# G = [[1, 1, 0, 1, 0, 1], 
+#      [1, 1, 0, 1, 0, 0], 
+#      [1, 0, 1, 1, 1, 1]]
+# n = 6
+# m = 3 
+
+# print(brute_force_approach(G, n, m))
 
 
 
